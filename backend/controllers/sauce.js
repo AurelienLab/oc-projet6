@@ -1,3 +1,4 @@
+const fs = require('fs')
 const Sauce = require('../models/sauce')
 
 exports.getAllSauces = (req, res, next) => {
@@ -13,10 +14,11 @@ exports.getOneSauce = (req,res, next) => {
 }
 
 exports.addSauce = (req, res, next) => {
-    delete req.body._id
+    delete req.body.sauce._id
 
     const sauce = new Sauce({
-        ...req.body,
+        ...JSON.parse(req.body.sauce),
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
         likes: 0,
         dislikes: 0,
         usersLiked: [],
@@ -32,7 +34,13 @@ exports.addSauce = (req, res, next) => {
 }
 
 exports.editSauce = (req, res, next) => {
-    console.log(req)
+    const sauceObject = req.file ? {
+            ...JSON.parse(req.body.sauce),
+            imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+    } : { ...req.body }
+
+    delete sauceObject.userId
+
     Sauce.findOne({_id: req.params.id})
         .then(sauce => {
             //Check if sauce exists
@@ -45,14 +53,19 @@ exports.editSauce = (req, res, next) => {
                 return res.status(403).json({message: "Unauthorized"})
             }
 
+            const imageName = sauce.imageUrl.split('/images/')[1]
 
-            Sauce.updateOne({_id: req.params.id}, {...req.body, _id: req.params.id })
-                .then(() => res.status(200).json({ message: 'Sauce modifiée avec succès !'}))
+            Sauce.updateOne({_id: req.params.id}, {...sauceObject, _id: req.params.id })
+                .then(() => {
+                    if(req.file) { //Delete old file if new one updated
+                        fs.unlink('images/' + imageName, () => {})
+                    }
+                    res.status(200).json({ message: 'Sauce modifiée avec succès !'})
+
+                })
                 .catch(error => res.status(400).json({error: error.message}))
         })
         .catch(error => res.status(400).json({error}))
-
-
 }
 
 exports.deleteSauce = (req, res, next) => {
@@ -68,9 +81,13 @@ exports.deleteSauce = (req, res, next) => {
             if(sauce.userId !== req.auth.userId) {
                 return res.status(403).json({message: "Unauthorized"})
             }
-
-            Sauce.deleteOne({_id: req.params.id})
-                .then(() => res.status(200).json({ message: 'Sauce modifiée avec succès !'}))
-                .catch(error => res.status(400).json({error: error.message}))
+            const imageName = sauce.imageUrl.split('/images/')[1]
+            console.log(imageName)
+            fs.unlink('images/' + imageName, () => {
+                Sauce.deleteOne({_id: req.params.id})
+                    .then(() => res.status(200).json({ message: 'Sauce modifiée avec succès !'}))
+                    .catch(error => res.status(400).json({error: error.message}))
+            })
         })
+        .catch(error => res.status(500).json({error}))
 }
