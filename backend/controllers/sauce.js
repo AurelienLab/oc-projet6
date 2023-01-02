@@ -2,7 +2,7 @@ const Sauce = require('../models/sauce')
 
 exports.getAllSauces = (req, res, next) => {
     Sauce.find()
-        .then(sauces => res.status(200).json({sauces}))
+        .then(sauces => res.status(200).json(sauces))
         .catch(error => res.status(400).json({error}))
 }
 
@@ -32,6 +32,7 @@ exports.addSauce = (req, res, next) => {
 }
 
 exports.editSauce = (req, res, next) => {
+    console.log(req)
     Sauce.findOne({_id: req.params.id})
         .then(sauce => {
             //Check if sauce exists
@@ -40,14 +41,16 @@ exports.editSauce = (req, res, next) => {
             }
 
             //Check is current user added the sauce
-            if(sauce._id !== req.auth.userId) {
-                return res.status(403)
+            if(sauce.userId !== req.auth.userId) {
+                return res.status(403).json({message: "Unauthorized"})
             }
+
 
             Sauce.updateOne({_id: req.params.id}, {...req.body, _id: req.params.id })
                 .then(() => res.status(200).json({ message: 'Sauce modifiée avec succès !'}))
                 .catch(error => res.status(400).json({error: error.message}))
         })
+        .catch(error => res.status(400).json({error}))
 
 
 }
@@ -62,14 +65,12 @@ exports.deleteSauce = (req, res, next) => {
             }
 
             //Check is current user added the sauce
-            if(sauce._id !== req.auth.userId) {
-                return res.status(403)
+            if(sauce.userId !== req.auth.userId) {
+                return res.status(403).json({message: "Unauthorized"})
             }
 
             Sauce.deleteOne({_id: req.params.id})
                 .then(() => res.status(200).json({ message: 'Sauce modifiée avec succès !'}))
                 .catch(error => res.status(400).json({error: error.message}))
         })
-
-
 }
