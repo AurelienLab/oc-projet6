@@ -6,6 +6,7 @@ const app = express()
 const env = process.env
 
 const userRoutes = require('./routes/user')
+const sauceRoutes = require('./routes/sauce')
 
 //Connexion MongoDB
 mongoose.connect(`mongodb+srv://${env.MONGODB_USER}:${env.MONGODB_PASSWORD}@${env.MONGODB_SERVER}/${env.MONGODB_DATABASE}?retryWrites=true&w=majority`,
@@ -25,6 +26,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/api/auth', userRoutes)
+app.use('/api/sauces', sauceRoutes)
 
 module.exports = app
 
