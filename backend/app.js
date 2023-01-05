@@ -2,14 +2,24 @@ const path = require('path')
 const express = require('express')
 const mongoose = require('mongoose')
 const mongoSanitize = require('express-mongo-sanitize');
+const rateLimit = require('express-rate-limit')
 
 require('dotenv').config()
+
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+})
 
 const app = express()
 const env = process.env
 
 const userRoutes = require('./routes/user')
 const sauceRoutes = require('./routes/sauce')
+
+app.use(limiter)
 
 //Connexion MongoDB
 mongoose.connect(`mongodb+srv://${env.MONGODB_USER}:${env.MONGODB_PASSWORD}@${env.MONGODB_SERVER}/${env.MONGODB_DATABASE}?retryWrites=true&w=majority`,
