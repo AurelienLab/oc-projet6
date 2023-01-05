@@ -2,15 +2,30 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const validator = require('validator')
 const { passwordStrength } = require('check-password-strength')
+const PasswordValidator = require("password-validator");
 
+const badPasswords = require('./bad-passwords.json')
 
 require('dotenv').config()
 
 const User = require('../models/user')
 
+
 exports.signin = (req, res, next) => {
+    let schema = new PasswordValidator()
+    schema
+        .is().min(8)
+        .has().uppercase()                              // Must have uppercase letters
+        .has().lowercase()                              // Must have lowercase letters
+        .has().digits(2)                          // Must have at least 2 digits
+        .is().not().oneOf(badPasswords);
+
     if(!validator.isEmail(req.body.email)) {
         const error = new Error("Adresse mail invalide")
+        return res.status(400).json({error : error.message})
+    }
+    if(passwordStrength(req.body.password).id <= 1 || !schema.validate(req.body.password)) {
+        const error = new Error("Password too weak")
         return res.status(400).json({error : error.message})
     }
 
