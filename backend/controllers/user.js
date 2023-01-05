@@ -21,7 +21,7 @@ exports.signin = (req, res, next) => {
 
 
 exports.login = (req, res, next) => {
-    User.findOne({email : req.body.email})
+    User.findOne({email : req.body.email}).select('password')
         .then(user => {
             if(!user) {
                 return res.status(401).json({message: "Paire email/mot de passe incorrecte"})
