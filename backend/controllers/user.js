@@ -1,10 +1,19 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const validator = require('validator')
+const { passwordStrength } = require('check-password-strength')
+
+
 require('dotenv').config()
 
 const User = require('../models/user')
 
 exports.signin = (req, res, next) => {
+    if(!validator.isEmail(req.body.email)) {
+        const error = new Error("Adresse mail invalide")
+        return res.status(400).json({error : error.message})
+    }
+
     bcrypt.hash(req.body.password, 10)
         .then(hash => {
             const user = new User({
@@ -21,6 +30,11 @@ exports.signin = (req, res, next) => {
 
 
 exports.login = (req, res, next) => {
+    if(!validator.isEmail(req.body.email)) {
+        const error = new Error("Adresse mail invalide")
+        return res.status(400).json({error : error.message})
+    }
+
     User.findOne({email : req.body.email}).select('password')
         .then(user => {
             if(!user) {
