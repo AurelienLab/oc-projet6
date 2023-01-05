@@ -1,6 +1,8 @@
 const path = require('path')
 const express = require('express')
 const mongoose = require('mongoose')
+const mongoSanitize = require('express-mongo-sanitize');
+
 require('dotenv').config()
 
 const app = express()
@@ -25,6 +27,15 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     next();
 });
+
+app.use(
+    mongoSanitize({
+        allowDots: true,
+        onSanitize: ({ req, key }) => {
+            console.warn(`This request[${key}] is sanitized`, req[key]);
+        },
+    }),
+);
 
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/api/auth', userRoutes)
