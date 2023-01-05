@@ -17,17 +17,21 @@ exports.signin = (req, res, next) => {
         .is().min(8)
         .has().uppercase()                              // Must have uppercase letters
         .has().lowercase()                              // Must have lowercase letters
-        .has().digits(2)                          // Must have at least 2 digits
+        .has().digits(1)                          // Must have at least 2 digits
         .is().not().oneOf(badPasswords);
 
-    if(!validator.isEmail(req.body.email)) {
-        const error = new Error("Adresse mail invalide")
-        return res.status(400).json({error : error.message})
+    try {
+        if(!validator.isEmail(req.body.email)) {
+            throw new Error("Adresse mail invalide")
+        }
+        if(passwordStrength(req.body.password).id <= 1 || !schema.validate(req.body.password)) {
+            throw new Error("Password too weak")
+        }
     }
-    if(passwordStrength(req.body.password).id <= 1 || !schema.validate(req.body.password)) {
-        const error = new Error("Password too weak")
-        return res.status(400).json({error : error.message})
+    catch(error) {
+        return res.status(400).json({error})
     }
+
 
     bcrypt.hash(req.body.password, 10)
         .then(hash => {
