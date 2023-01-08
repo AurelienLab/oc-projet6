@@ -4,6 +4,7 @@ const mongoose = require('mongoose')
 const mongoSanitize = require('express-mongo-sanitize');
 const rateLimit = require('express-rate-limit')
 
+logger = require('./logger')
 require('dotenv').config()
 
 const limiter = rateLimit({
@@ -25,8 +26,8 @@ app.use(limiter)
 mongoose.connect(`mongodb+srv://${env.MONGODB_USER}:${env.MONGODB_PASSWORD}@${env.MONGODB_SERVER}/${env.MONGODB_DATABASE}?retryWrites=true&w=majority`,
     { useNewUrlParser: true,
         useUnifiedTopology: true })
-    .then(() => console.log('Connexion à MongoDB réussie !'))
-    .catch(() => console.log('Connexion à MongoDB échouée !'));
+    .then(() => logger.info('Successfully connected to MongoDB'))
+    .catch((error) => logger.error('MongoDB connexion failed - ', error));
 
 app.use(express.json());
 
@@ -42,7 +43,7 @@ app.use(
     mongoSanitize({
         allowDots: true,
         onSanitize: ({ req, key }) => {
-            console.warn(`This request[${key}] is sanitized`, req[key]);
+            logger.warn(`This request[${key}] is sanitized`, req[key]);
         },
     }),
 );
