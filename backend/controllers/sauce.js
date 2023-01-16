@@ -106,7 +106,7 @@ exports.deleteSauce = (req, res, next) => {
             //Check if sauce exists
             if(!sauce) {
                 logger.info(`DELETING - Sauce ${req.params.id} not found`)
-                const error = new Error('Sauce introuvable')
+                const error = new Error('Sauce not found')
                 return res.status(404).json({error : error.message})
             }
 
@@ -139,6 +139,13 @@ exports.deleteSauce = (req, res, next) => {
 exports.likeSauce = (req, res, next) => {
     Sauce.findOne({_id: req.params.id})
         .then(sauce => {
+            if(!sauce) {
+                logger.info(`LIKING - Sauce ${req.params.id} not found`)
+                const error = new Error('Sauce not found')
+                return res.status(404).json({error : error.message})
+            }
+
+
             let message = "Sauce "
             switch (req.body.like) {
                 case -1: //User clicked on dislike
@@ -166,7 +173,8 @@ exports.likeSauce = (req, res, next) => {
                     break;
                 default:
                     logger.warn(`LIKE/DISLIKE - Bad value for "like" field - BAD REQUEST`)
-                    return res.status(400).json(new Error('Bad request'))
+                    const error = new Error('Bad request')
+                    return res.status(400).json({error: error.message})
             }
 
             //Calculate likes and dislikes
