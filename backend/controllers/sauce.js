@@ -6,23 +6,31 @@ exports.getAllSauces = (req, res, next) => {
     Sauce.find()
         .then(sauces => res.status(200).json(sauces))
         .catch(error => {
-            res.status(400).json({error})
+            res.status(400).json({error: error.message})
             logger.error('Error fetching Sauces - ', error)
         })
 }
 
 exports.getOneSauce = (req,res, next) => {
     Sauce.findOne({_id : req.params.id })
-        .then(sauce => res.status(200).json(sauce))
+        .then(sauce => {
+            if(!sauce) {
+                const error = new Error("Sauce not found")
+                return res.status(404).json({error: error.message})
+            }
+            res.status(200).json(sauce)
+        })
         .catch(error => {
-            res.status(404).json({error})
+            res.status(404).json({error: error.message})
             logger.error(`Error fetching sauce ${req.params.id} - `, error)
         })
 }
 
 exports.addSauce = (req, res, next) => {
+    // Remove potential passed id for safety
     delete req.body.sauce._id
 
+    // Construction of new sauce object
     const sauce = new Sauce({
         ...JSON.parse(req.body.sauce),
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
@@ -39,7 +47,7 @@ exports.addSauce = (req, res, next) => {
             logger.info(`Sauce ${sauce.name} successfully added by user ${req.auth.userId} - `, sauce)
         })
         .catch(error => {
-            res.status(400).json({error})
+            res.status(400).json({error: error.message})
             logger.error(`Error adding sauce - `, error)
         })
 }
@@ -57,15 +65,17 @@ exports.editSauce = (req, res, next) => {
             //Check if sauce exists
             if(!sauce) {
                 logger.info(`EDITING - Sauce ${req.params.id} not found`)
-                return res.status(404).json({message: 'Sauce not found'})
+                const err = new Error('Sauce not found')
+                return res.status(404).json({error: err.message})
             }
 
             //Check is current user added the sauce
             if(sauce.userId !== req.auth.userId) {
                 logger.warn(`EDITING - User ${req.auth.userId} tried to edit sauce ${sauce._id} - Unauthorized`)
-                return res.status(403).json({message: "Unauthorized"})
+                const err = new Error('Unauthorized')
+                return res.status(403).json({error: err.message})
             }
-
+            //Get image filename
             const imageName = sauce.imageUrl.split('/images/')[1]
 
             Sauce.updateOne({_id: req.params.id}, {...sauceObject, _id: req.params.id })
@@ -84,7 +94,7 @@ exports.editSauce = (req, res, next) => {
                 })
         })
         .catch(error => {
-            res.status(400).json({error})
+            res.status(400).json({error: error.message})
             logger.error(`EDITING - Error while editing sauce - `, error)
         })
 }
@@ -96,13 +106,15 @@ exports.deleteSauce = (req, res, next) => {
             //Check if sauce exists
             if(!sauce) {
                 logger.info(`DELETING - Sauce ${req.params.id} not found`)
-                return res.status(404).json({message: 'Sauce introuvable'})
+                const error = new Error('Sauce introuvable')
+                return res.status(404).json({error : error.message})
             }
 
             //Check is current user added the sauce
             if(sauce.userId !== req.auth.userId) {
                 logger.warn(`DELETING - User ${req.auth.userId} tried to edit sauce ${sauce._id} - Unauthorized`)
-                return res.status(403).json({message: "Unauthorized"})
+                const error = new Error("Unauthorized")
+                return res.status(403).json({error: error.message})
             }
             const imageName = sauce.imageUrl.split('/images/')[1]
             fs.unlink('images/' + imageName, () => {
@@ -119,7 +131,7 @@ exports.deleteSauce = (req, res, next) => {
             })
         })
         .catch(error => {
-            res.status(500).json({error})
+            res.status(500).json({error: error.message})
             logger.error(`DELETING - Error while editing sauce - `, error)
         })
 }
@@ -164,13 +176,13 @@ exports.likeSauce = (req, res, next) => {
             sauce.save()
                 .then(() => res.status(200).json({message}))
                 .catch(error => {
-                    res.status(400).json({error})
+                    res.status(400).json({error: error.message})
                     logger.error(`LIKE/DISLIKE - `, error)
                 })
 
         })
         .catch(error => {
             logger.error(`LIKE/DISLIKE - `, error)
-            res.status(400).json({error})
+            res.status(400).json({error: error.message})
         })
 }

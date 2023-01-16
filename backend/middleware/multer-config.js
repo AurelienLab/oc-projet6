@@ -9,6 +9,7 @@ const MIME_TYPES = {
 
 const storage = multer.diskStorage({
     destination: (req, file, callback) => {
+        console.log(req.body)
         callback(null, 'images');
     },
     filename: (req, file, callback) => {
