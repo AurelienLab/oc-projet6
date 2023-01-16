@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const validator = require('validator')
-const { passwordStrength } = require('check-password-strength')
+const {passwordStrength} = require('check-password-strength')
 const PasswordValidator = require("password-validator");
 
 const badPasswords = require('./bad-passwords.json')
@@ -23,15 +23,14 @@ exports.signup = (req, res, next) => {
 
     try {
         //If email is not valid
-        if(!validator.isEmail(req.body.email)) {
+        if (!validator.isEmail(req.body.email)) {
             throw new Error("Adresse mail invalide")
         }
         //If password is not strong enough
-        if(passwordStrength(req.body.password).id <= 1 || !schema.validate(req.body.password)) {
-            throw new Error("Password too weak. Reasons: " + schema.validate(req.body.password, { list: true}))
+        if (passwordStrength(req.body.password).id <= 1 || !schema.validate(req.body.password)) {
+            throw new Error("Password too weak. Reasons: " + schema.validate(req.body.password, {list: true}))
         }
-    }
-    catch(error) { // if error thrown : stop execution and return error
+    } catch (error) { // if error thrown : stop execution and return error
         logger.warn('Bad credentials for signup - ', error)
         return res.status(400).json({error: error.message})
     }
@@ -45,7 +44,7 @@ exports.signup = (req, res, next) => {
             })
 
             user.save()
-                .then(() => res.status(201).json({ message: "Successfully signed up"}))
+                .then(() => res.status(201).json({message: "Successfully signed up"}))
                 .catch(error => {
                     res.status(400).json({error: error.message})
                     logger.error('Error during user signup - ', error)
@@ -60,27 +59,27 @@ exports.signup = (req, res, next) => {
 
 exports.login = (req, res, next) => {
     // If email is not valid, stop execution and returns error
-    if(!validator.isEmail(req.body.email)) {
+    if (!validator.isEmail(req.body.email)) {
         const error = new Error("Invalid email address entered")
         logger.info('Login error - invalid email - ', error)
-        return res.status(400).json({error : error.message})
+        return res.status(400).json({error: error.message})
     }
 
-    User.findOne({email : req.body.email}).select('password')
+    User.findOne({email: req.body.email}).select('password')
         .then(user => {
-            if(!user) {
+            if (!user) {
                 logger.info('Login error from ' + req.ip)
                 const err = new Error("Wrong mail and/or password")
-                return res.status(401).json({error: err.message })
+                return res.status(401).json({error: err.message})
             }
 
             //Check if password is the right one
             bcrypt.compare(req.body.password, user.password)
                 .then(valid => {
-                    if(!valid) {
+                    if (!valid) {
                         logger.info('Login error from ' + req.ip)
                         const err = new Error("Wrong mail and/or password")
-                        return res.status(401).json({error: err.message })
+                        return res.status(401).json({error: err.message})
                     }
                     //Response with the new auth token
                     const response = {

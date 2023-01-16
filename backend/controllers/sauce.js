@@ -11,10 +11,10 @@ exports.getAllSauces = (req, res, next) => {
         })
 }
 
-exports.getOneSauce = (req,res, next) => {
-    Sauce.findOne({_id : req.params.id })
+exports.getOneSauce = (req, res, next) => {
+    Sauce.findOne({_id: req.params.id})
         .then(sauce => {
-            if(!sauce) {
+            if (!sauce) {
                 const error = new Error("Sauce not found")
                 return res.status(404).json({error: error.message})
             }
@@ -54,23 +54,23 @@ exports.addSauce = (req, res, next) => {
 
 exports.editSauce = (req, res, next) => {
     const sauceObject = req.file ? {
-            ...JSON.parse(req.body.sauce),
-            imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    } : { ...req.body }
+        ...JSON.parse(req.body.sauce),
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+    } : {...req.body}
 
     delete sauceObject.userId
 
     Sauce.findOne({_id: req.params.id})
         .then(sauce => {
             //Check if sauce exists
-            if(!sauce) {
+            if (!sauce) {
                 logger.info(`EDITING - Sauce ${req.params.id} not found`)
                 const err = new Error('Sauce not found')
                 return res.status(404).json({error: err.message})
             }
 
             //Check is current user added the sauce
-            if(sauce.userId !== req.auth.userId) {
+            if (sauce.userId !== req.auth.userId) {
                 logger.warn(`EDITING - User ${req.auth.userId} tried to edit sauce ${sauce._id} - Unauthorized`)
                 const err = new Error('Unauthorized')
                 return res.status(403).json({error: err.message})
@@ -78,14 +78,14 @@ exports.editSauce = (req, res, next) => {
             //Get image filename
             const imageName = sauce.imageUrl.split('/images/')[1]
 
-            Sauce.updateOne({_id: req.params.id}, {...sauceObject, _id: req.params.id })
+            Sauce.updateOne({_id: req.params.id}, {...sauceObject, _id: req.params.id})
                 .then(() => {
-                    if(req.file) { //Delete old file if new one updated
+                    if (req.file) { //Delete old file if new one updated
                         fs.unlink('images/' + imageName, () => {
                             logger.info(`EDITING - File images/${imageName} successfully deleted`)
                         })
                     }
-                    res.status(200).json({ message: 'Sauce successfully updated !'})
+                    res.status(200).json({message: 'Sauce successfully updated !'})
                     logger.info(`EDITING - Sauce ${sauce._id} edited by user ${req.auth.userId}`, sauce)
                 })
                 .catch(error => {
@@ -104,14 +104,14 @@ exports.deleteSauce = (req, res, next) => {
     Sauce.findOne({_id: req.params.id})
         .then(sauce => {
             //Check if sauce exists
-            if(!sauce) {
+            if (!sauce) {
                 logger.info(`DELETING - Sauce ${req.params.id} not found`)
                 const error = new Error('Sauce not found')
-                return res.status(404).json({error : error.message})
+                return res.status(404).json({error: error.message})
             }
 
             //Check is current user added the sauce
-            if(sauce.userId !== req.auth.userId) {
+            if (sauce.userId !== req.auth.userId) {
                 logger.warn(`DELETING - User ${req.auth.userId} tried to edit sauce ${sauce._id} - Unauthorized`)
                 const error = new Error("Unauthorized")
                 return res.status(403).json({error: error.message})
@@ -121,7 +121,7 @@ exports.deleteSauce = (req, res, next) => {
                 logger.info(`DELETING - File images/${imageName} successfully deleted`)
                 Sauce.deleteOne({_id: req.params.id})
                     .then(() => {
-                        res.status(200).json({ message: 'Sauce supprimée avec succès !'})
+                        res.status(200).json({message: 'Sauce supprimée avec succès !'})
                         logger.info(`DELETING - Sauce ${sauce._id} deleted by user ${req.auth.userId}`, sauce)
                     })
                     .catch(error => {
@@ -139,19 +139,19 @@ exports.deleteSauce = (req, res, next) => {
 exports.likeSauce = (req, res, next) => {
     Sauce.findOne({_id: req.params.id})
         .then(sauce => {
-            if(!sauce) {
+            if (!sauce) {
                 logger.info(`LIKING - Sauce ${req.params.id} not found`)
                 const error = new Error('Sauce not found')
-                return res.status(404).json({error : error.message})
+                return res.status(404).json({error: error.message})
             }
 
 
             let message = "Sauce "
             switch (req.body.like) {
                 case -1: //User clicked on dislike
-                    if(sauce.usersDisliked.includes(req.auth.userId)) { //If user already disliked, do nothing
+                    if (sauce.usersDisliked.includes(req.auth.userId)) { //If user already disliked, do nothing
                         const error = new Error('Already disliked')
-                        return res.status(405).json({error : error.message});
+                        return res.status(405).json({error: error.message});
                     }
                     sauce.usersLiked = sauce.usersLiked.filter(userId => userId !== req.auth.userId) //Remove user from liked array
                     sauce.usersDisliked.push(req.auth.userId) //Add user to disliked array
@@ -163,9 +163,9 @@ exports.likeSauce = (req, res, next) => {
                     message += "lost its like / dislike"
                     break;
                 case 1: //User clicked on like
-                    if(sauce.usersLiked.includes(req.auth.userId))  { //If user already liked, do nothing
+                    if (sauce.usersLiked.includes(req.auth.userId)) { //If user already liked, do nothing
                         const error = new Error('Already liked')
-                        return res.status(405).json({error : error.message});
+                        return res.status(405).json({error: error.message});
                     }
                     sauce.usersDisliked = sauce.usersDisliked.filter(userId => userId !== req.auth.userId) //Remove user from liked array
                     sauce.usersLiked.push(req.auth.userId) //Add user to disliked array

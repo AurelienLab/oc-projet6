@@ -10,8 +10,7 @@ auth = (req, res, next) => {
             userId
         }
         next()
-    }
-    catch(error) {
+    } catch (error) {
         res.status(401).json({error: error.message})
     }
 }

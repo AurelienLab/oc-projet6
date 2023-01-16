@@ -24,8 +24,10 @@ app.use(limiter)
 
 //Connexion MongoDB
 mongoose.connect(`mongodb+srv://${env.MONGODB_USER}:${env.MONGODB_PASSWORD}@${env.MONGODB_SERVER}/${env.MONGODB_DATABASE}?retryWrites=true&w=majority`,
-    { useNewUrlParser: true,
-        useUnifiedTopology: true })
+    {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+    })
     .then(() => logger.info('Successfully connected to MongoDB'))
     .catch((error) => logger.error('MongoDB connexion failed - ', error));
 
@@ -42,7 +44,7 @@ app.use((req, res, next) => {
 app.use(
     mongoSanitize({
         allowDots: true,
-        onSanitize: ({ req, key }) => {
+        onSanitize: ({req, key}) => {
             logger.warn(`This request[${key}] is sanitized`, req[key]);
         },
     }),
